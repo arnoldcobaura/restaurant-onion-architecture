@@ -1,16 +1,17 @@
 package com.empresa.restaurant_onion_architecture.application;
 
 import com.empresa.restaurant_onion_architecture.domain.Pedido;
-import com.empresa.restaurant_onion_architecture.domain.PedidoRepository;
 import com.empresa.restaurant_onion_architecture.domain.Plato;
+import com.empresa.restaurant_onion_architecture.domain.interfaces.IPedidoRepository;
+
 import org.springframework.stereotype.Service;
 
 @Service
 public class PedidoService {
 
-    private final PedidoRepository repository;
+    private final IPedidoRepository repository;
 
-    public PedidoService(PedidoRepository repository){
+    public PedidoService(IPedidoRepository repository){
         this.repository = repository;
     }
 
