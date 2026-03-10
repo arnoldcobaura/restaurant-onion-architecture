@@ -25,9 +25,10 @@ src/main/java/com/empresa/restaurant_onion_architecture/
 ├── infrastructure/                  # Capa de Infraestructura
 │   └── persistence/
 │       └── MySQLPedidoRepository.java  # Implementación del repositorio
-└── interfaces/                      # Capa de Interfaces (Controladores)
-    └── controllers/
-        └── PedidoController.java    # Controlador REST
+├── adapter/                         # Capa de Adaptadores
+│   └── controllers/
+│       └── PedidoController.java    # Controlador REST
+└── RestaurantOnionArchitectureApplication.java  # Clase principal de Spring Boot
 ```
 
 ## 🎯 Principios de Clean Architecture
@@ -59,16 +60,17 @@ Implementa los detalles técnicos:
 - Asigna IDs automáticamente en la primera inserción
 - Gestiona el almacenamiento de datos
 
-### 4. **Interfaces Layer (Capa de Interfaces)**
+### 4. **Adapter Layer (Capa de Adaptadores)**
 Expone la API REST:
 - `PedidoController`: Controlador REST
 - Recibe requests HTTP
 - Retorna respuestas JSON
+- Inyecta `PedidoService` por constructor
 
 ## 🔄 Flujo de Dependencias
 
 ```
-Interfaces (Controllers)
+Adapter (Controllers)
     ↓ depende de
 Application (Services)
     ↓ depende de
@@ -78,9 +80,10 @@ Infrastructure (Implementaciones)
 ```
 
 **Inversión de Dependencias (DIP):** 
-- Las capas internas (Domain) nunca dependen de las externas (Infrastructure, Interfaces)
+- Las capas internas (Domain) nunca dependen de las externas (Infrastructure, Adapter)
 - Infrastructure implementa las interfaces definidas en Domain
 - Application depende de abstracciones (IPedidoRepository), no de implementaciones concretas
+- Adapter depende de Application, no de Infrastructure directamente
 - Esto permite cambiar la implementación sin afectar el resto del código
 
 ## 🚀 Endpoints API
@@ -170,8 +173,10 @@ Retorna el pedido completo con todos sus datos.
 
 - **Spring Boot 3.5.11**
 - **Java 17**
-- **Maven**
-- **Lombok** (opcional, para reducir boilerplate)
+- **Maven 3.6+**
+- **Lombok** (para reducir boilerplate)
+- **Spring Boot DevTools** (para desarrollo)
+- **Spring Boot Test** (para testing)
 
 ## 🛠️ Requisitos
 
@@ -197,6 +202,23 @@ mvn spring-boot:run
 
 La aplicación estará disponible en `http://localhost:8080`
 
+## 💡 Detalles de Implementación
+
+### Inyección de Dependencias
+- `PedidoController` recibe `PedidoService` por constructor
+- `PedidoService` recibe `IPedidoRepository` por constructor
+- Spring Boot gestiona automáticamente las inyecciones con `@Service`
+
+### Almacenamiento de Datos
+- Actualmente utiliza **HashMap en memoria** para persistencia
+- Los datos se pierden al reiniciar la aplicación
+- Preparado para migrar a MySQL o cualquier otra base de datos sin cambiar la lógica de negocio
+
+### Asignación de IDs
+- Los IDs se asignan automáticamente en la clase `MySQLPedidoRepository`
+- Se incrementan secuencialmente desde 1
+- Cada pedido tiene un ID único
+
 ## 🧪 Validaciones de Negocio
 
 El sistema implementa las siguientes validaciones en la capa de dominio y aplicación:
@@ -204,15 +226,32 @@ El sistema implementa las siguientes validaciones en la capa de dominio y aplica
 1. **No se puede agregar platos a un pedido confirmado**
    - Ubicación: `Pedido.agregarPlato()`
    - Lanza: `RuntimeException: El pedido ya está confirmado`
+   - Valida que el estado del pedido sea consistente
 
 2. **No se puede confirmar un pedido vacío**
    - Ubicación: `Pedido.confirmar()`
    - Lanza: `RuntimeException: No se puede confirmar un pedido vacío`
+   - Asegura que todo pedido tenga al menos un plato
 
 3. **No se puede operar sobre un pedido inexistente**
-   - Ubicación: `PedidoService` (todos los métodos)
+   - Ubicación: `PedidoService` (métodos: agregarPlato, confirmarPedido, obtenerPedido)
    - Lanza: `RuntimeException: Pedido no encontrado con id: {id}`
-   - Esto evita operaciones sobre pedidos que no existen en la base de datos
+   - Evita operaciones sobre pedidos que no existen en la base de datos
+   - Proporciona feedback claro al usuario
+
+## 🧪 Testing
+
+El proyecto incluye **Spring Boot Test** para escribir pruebas unitarias e integración:
+
+```bash
+mvn test
+```
+
+### Recomendaciones para Testing
+- **Tests unitarios**: Probar la lógica de negocio en `Pedido` sin dependencias
+- **Tests de servicio**: Probar `PedidoService` con mocks de `IPedidoRepository`
+- **Tests de integración**: Probar los endpoints REST con `@SpringBootTest`
+- **Cobertura**: Apuntar a >80% de cobertura en las capas de Domain y Application
 
 ## 🔮 Mejoras Futuras
 
@@ -228,6 +267,9 @@ El sistema implementa las siguientes validaciones en la capa de dominio y aplica
 - [ ] Manejo de errores global con @ControllerAdvice
 - [ ] DTOs (Data Transfer Objects) para separar la API del domain
 - [ ] Paginación y filtrado en listados
+- [ ] Entidad Cliente integrada con Pedido
+- [ ] Cálculo de total de pedidos
+- [ ] Historial de cambios en pedidos
 
 ## 📚 Conceptos Clave
 

@@ -1,4 +1,4 @@
-package com.empresa.restaurant_onion_architecture.interfaces.controllers;
+package com.empresa.restaurant_onion_architecture.adapter.controllers;
 
 import com.empresa.restaurant_onion_architecture.application.PedidoService;
 import com.empresa.restaurant_onion_architecture.domain.Pedido;
